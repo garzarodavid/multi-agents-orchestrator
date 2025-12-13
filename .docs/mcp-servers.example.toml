@@ -1,0 +1,27 @@
+# Exemplo de configuracao MCP (ajuste comandos/paths conforme seu ambiente).
+
+# Servidor MCP para PostgreSQL usando binario `psql` como transport.
+[servers.postgres]
+command = "psql"
+args = ["--no-psqlrc"]
+# Opcional: variaveis de ambiente para credenciais
+# env = { "PGHOST" = "localhost", "PGPORT" = "5432", "PGUSER" = "postgres", "PGPASSWORD" = "postgres", "PGDATABASE" = "postgres" }
+
+# Servidor MCP para Azure (ajuste para o client MCP que voce usar).
+[servers.azure]
+command = "az"
+args = ["account", "show"]
+# Exemplo de variaveis de ambiente/tenant (se necessario):
+# env = { "AZURE_CONFIG_DIR" = "C:\\\\path\\\\to\\\\azure-config" }
+
+# Servidor MCP para GitHub (usando gh CLI como transport de exemplo).
+[servers.github]
+command = "gh"
+args = ["status"]
+# Pode apontar para um token via env, se o client MCP suportar:
+# env = { "GITHUB_TOKEN" = "ghp_xxx" }
+
+# Observacoes:
+# - Ajuste `command`/`args` para o client MCP real que voce tiver (estes sao exemplos).
+# - Se usar um arquivo `servers.json`, converta os blocos acima para JSON.
+# - Garanta que os binarios estejam no PATH do processo que executa o orquestrador.

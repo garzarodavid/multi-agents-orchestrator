@@ -1,0 +1,26 @@
+# Mapeia modelos por provedor, estrategia e agente.
+# Estrutura:
+# [provider.strategy]
+# default = "<modelo>"
+# agent_<nome> = "<modelo>"
+
+[openai.quality]
+default = "gpt-4.1"
+agent_dba = "gpt-4.1"
+agent_devops = "gpt-4.1"
+
+[openai.balance]
+default = "gpt-4.1-mini"
+agent_dba = "gpt-4.1-mini"
+agent_devops = "gpt-4.1-mini"
+
+[openai.cost]
+default = "gpt-3.5-turbo"
+
+[gemini.balance]
+default = "gemini-1.5-flash"
+agent_dba = "gemini-1.5-pro"
+
+[claude.balance]
+default = "claude-3-sonnet-20240229"
+agent_dba = "claude-3-5-sonnet-20240620"

@@ -1,0 +1,20 @@
+# Configuracao MCP de exemplo pronta para uso local (ajuste conforme seu ambiente).
+
+[servers.postgres]
+command = "psql"
+args = ["--no-psqlrc"]
+# Ajuste as variaveis conforme seu banco; nao deixe segredos em git.
+env = { PGHOST = "localhost", PGPORT = "5432", PGUSER = "postgres", PGDATABASE = "postgres" }
+# Para senha, exporte PGPASSWORD via ambiente e nao salve aqui.
+
+[servers.azure]
+command = "az"
+args = ["account", "show"]
+# Necessario estar autenticado (ex.: `az login`). Ajuste AZURE_CONFIG_DIR se usar perfil custom.
+# env = { AZURE_CONFIG_DIR = "C:\\\\Users\\\\seu_usuario\\\\.azure" }
+
+[servers.github]
+command = "gh"
+args = ["status"]
+# Necessario estar autenticado (ex.: `gh auth login`). Para token via env:
+# env = { GITHUB_TOKEN = "ghp_xxx" }
