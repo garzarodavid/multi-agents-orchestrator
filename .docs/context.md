@@ -25,7 +25,6 @@ Este documento resume o estado atual do orquestrador, decisoes ja tomadas e pont
 - Token Broker: tenta HTTP `/token?provider=`; fallback `LLM_TOKEN_<PROVIDER>`.
 
 ## Limitacoes / Debitos atuais
-- Adapters Gemini/Claude ausentes (factory gera erro ao selecionar).
 - MCP client/server sao minimos; sem SDK MCP real, sem OAuth, server nao retorna output real do orquestrador.
 - Cache simples por hash (agente+mensagem) sem escopo por repo/commit.
 - Observabilidade apenas logs JSON opt-in; sem metricas reais de tokens/custo.
@@ -33,12 +32,11 @@ Este documento resume o estado atual do orquestrador, decisoes ja tomadas e pont
 - Token Broker real (extensao VS Code/SecretStorage) nao implementado; apenas o cliente.
 
 ## Proximos passos priorizados (projeto 100% funcional)
-1) Adapters Gemini/Claude (providers) com tests de fakes/mocks; habilitar LLM_PROVIDER sem erro.
-2) MCP server real: retornar resposta do orquestrador, incluir agente/modelo/usage; erros estruturados.
-3) MCP client robusto: trocar subprocess por SDK MCP com discovery e auth; testes com fakes.
-4) Token Broker real: integrar com broker (VS Code ou servico local), refresh/SecretStorage; melhorar mensagens de erro/retries.
-5) Builder hardening: validar JSON, slug seguro, persistencia/recarga de contratos generated_*.
-6) Cache inteligente: escopo por repo/commit/arquivo; TTL; opcao NO_CACHE.
-7) Observabilidade: logs estruturados com custo/usage; hooks para metricas/OTEL.
-8) CLI/UX extra: `--plan-only`, `--agent`, escolha de mapa via flag, mensagens de fallback melhores.
-9) Docs/playbooks: setup por provedor, MCP real, broker real, troubleshooting.
+1) MCP server real: retornar resposta do orquestrador, incluir agente/modelo/usage; erros estruturados.
+2) MCP client robusto: trocar subprocess por SDK MCP com discovery e auth; testes com fakes.
+3) Token Broker real: integrar com broker (VS Code ou servico local), refresh/SecretStorage; melhorar mensagens de erro/retries.
+4) Builder hardening: validar JSON, slug seguro, persistencia/recarga de contratos generated_*.
+5) Cache inteligente: escopo por repo/commit/arquivo; TTL; opcao NO_CACHE.
+6) Observabilidade: logs estruturados com custo/usage; hooks para metricas/OTEL.
+7) CLI/UX extra: `--plan-only`, `--agent`, escolha de mapa via flag, mensagens de fallback melhores.
+8) Docs/playbooks: setup por provedor, MCP real, broker real, troubleshooting.
