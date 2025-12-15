@@ -24,8 +24,9 @@ class LocalFileIO:
 
 class McpFileIO(LocalFileIO):
     """
-    Stub para futura integração com MCP filesystem.
-    Hoje delega ao LocalFileIO; se existir tool MCP, plugar aqui.
+    Implementação que pode ser estendida para usar MCP filesystem.
+    Por enquanto delega ao LocalFileIO; se houver tool MCP "filesystem",
+    plugar chamadas reais aqui.
     """
     def __init__(self, delegate: LocalFileIO | None = None) -> None:
         self._delegate = delegate or LocalFileIO()
