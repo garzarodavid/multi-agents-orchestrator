@@ -30,6 +30,7 @@ from agents.agent_requisitos import create_requisitos_agent
 from agents.agent_vue import create_vue_agent
 from llm_client import LLMClient, create_llm_client
 from mcp_config import load_mcp_servers
+from workflow import WorkflowManager
 import re
 
 
@@ -91,9 +92,11 @@ class Orchestrator:
         self,
         llm_client: Optional[LLMClient] = None,
         mcp_config_path: Optional[str] = None,
+        workflow: Optional[WorkflowManager] = None,
     ) -> None:
         self._llm_client = llm_client or create_llm_client(default_model=DEFAULT_MODEL)
         self._mcp_servers, self._mcp_warning = load_mcp_servers(mcp_config_path)
+        self._workflow = workflow or WorkflowManager()
 
     def run_agent(
         self,
@@ -132,10 +135,21 @@ class Orchestrator:
             {"role": "user", "content": user_message},
         ]
 
+        wf = self._workflow.preprocess(user_message, agent_name)
+        if wf.blocked:
+            return wf.message
+        if wf.plan_id:
+            self._workflow.mark_in_progress(wf.plan_id)
+
         try:
             resposta = self._llm_client.generate(messages=messages, model=resolved_model, agent=agent_name)
-            return resposta.strip()
+            resp_text = resposta.strip()
+            if wf.plan_id:
+                self._workflow.mark_done(wf.plan_id, agent_name, resp_text)
+            return resp_text
         except Exception as exc:
+            if wf.plan_id:
+                self._workflow.mark_done(wf.plan_id, agent_name, f"Erro: {exc}")
             return f"[Erro ao contatar a API]: {exc}"
 
     @staticmethod
