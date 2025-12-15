@@ -12,22 +12,15 @@ from orchestrator_v2.cache import (
 )
 from orchestrator_v2.observability import log_event
 from providers.base import LLMProvider
-from workflow import WorkflowManager, WorkflowResult
+from multiagents.guardrails.enforcer import ContextEnforcer
 
 
-async def _run_task(task: PlannedTask, provider: LLMProvider, state: ConversationState, budget: BudgetManager, cache: Dict[str, str], workflow: WorkflowManager) -> Dict[str, str]:
+async def _run_task(task: PlannedTask, provider: LLMProvider, state: ConversationState, budget: BudgetManager, cache: Dict[str, str], enforcer: ContextEnforcer) -> Dict[str, str]:
     """
-    Executa um task (um agente) com checagem básica de orçamento.
-    Uso de to_thread para manter compatibilidade com clientes síncronos.
+    Executa um task (um agente) com checagem basica de orcamento.
+    Uso de to_thread para manter compatibilidade com clientes sincronos.
     """
-    # Reserva orçamento (estimativa simples por chamada)
     budget.register_call()
-
-    wf = workflow.preprocess(task.content, task.agent)
-    if wf.blocked:
-        return {"agent": task.agent, "task": task.name, "response": wf.message, "usage": {"blocked": True}}
-    if wf.plan_id:
-        workflow.mark_in_progress(wf.plan_id)
 
     cache_key = build_cache_key(task.agent, task.content, None)
     cached = get_cached_response(cache_key, cache)
@@ -39,17 +32,16 @@ async def _run_task(task: PlannedTask, provider: LLMProvider, state: Conversatio
             {"role": "system", "content": f"Agente {task.agent}. Tarefa: {task.content}"},
             {"role": "user", "content": task.content},
         ]
-        try:
-            result = await provider.chat(model=None, messages=messages, tools=None, agent=task.agent)
-            response_text = result.text
-            usage = result.usage
-            set_cached_response(cache_key, response_text, cache)
-        except Exception as exc:
-            response_text = f"[Erro ao contatar LLM]: {exc}"
-            usage = {"error": True}
 
-    if wf.plan_id:
-        workflow.mark_done(wf.plan_id, task.agent, response_text)
+        def sync_handler(_ctx):
+            async def _call():
+                return await provider.chat(model=None, messages=messages, tools=None, agent=task.agent)
+            result = asyncio.run(_call())
+            return result.text if hasattr(result, "text") else str(result)
+
+        response_text = await asyncio.to_thread(enforcer.run, task.agent, task.content, sync_handler)
+        usage = {"enforced": True}
+        set_cached_response(cache_key, response_text, cache)
 
     state.append_user(task.content)
     state.append_assistant(task.agent, response_text)
@@ -60,12 +52,12 @@ async def _run_task(task: PlannedTask, provider: LLMProvider, state: Conversatio
     return result
 
 
-async def run_tasks(tasks: List[PrannedTask], provider: LLMProvider, state: ConversationState, budget: BudgetManager) -> List[Dict[str, str]]:
+async def run_tasks(tasks: List[PlannedTask], provider: LLMProvider, state: ConversationState, budget: BudgetManager) -> List[Dict[str, str]]:
     cache = load_cache()
-    workflow = WorkflowManager()
+    enforcer = ContextEnforcer()
     coros = []
     for t in tasks:
         if not budget.can_run():
             raise BudgetExceeded("Orcamento insuficiente para rodar todas as tarefas.")
-        coros.append(_run_task(t, provider, state, budget, cache, workflow))
+        coros.append(_run_task(t, provider, state, budget, cache, enforcer))
     return await asyncio.gather(*coros)
